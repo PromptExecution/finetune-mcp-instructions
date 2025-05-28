@@ -1,0 +1,38 @@
+[
+  {
+    "instruction": "List open issues in the repository",
+    "completion": "I'll list the open issues in this repository.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>list_issues</tool_name>\n<arguments>\n{\n  \"state\": \"open\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "github",
+      "complexity": "simple",
+      "tool": "list_issues"
+    }
+  },
+  {
+    "instruction": "Show information about this GitHub repository",
+    "completion": "I'll show information about this GitHub repository.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_repo</tool_name>\n<arguments>\n{}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "github",
+      "complexity": "simple",
+      "tool": "get_repo"
+    }
+  },
+  {
+    "instruction": "Search for code that uses the 'useEffect' hook in the repository and show one of the files",
+    "completion": "I'll search for code using the useEffect hook, then view one of the files.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>search_code</tool_name>\n<arguments>\n{\n  \"query\": \"useEffect\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll view one of the files that contains the useEffect hook.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_content</tool_name>\n<arguments>\n{\n  \"path\": \"src/components/App.js\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "github",
+      "complexity": "multi_step",
+      "tool": "search_code"
+    }
+  },
+  {
+    "instruction": "Find all pull requests related to performance improvements, show their changes, and summarize the approaches used",
+    "completion": "I'll analyze pull requests related to performance improvements.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>search_issues</tool_name>\n<arguments>\n{\n  \"query\": \"is:pr performance\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll examine the changes in PR #42.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_pull_request</tool_name>\n<arguments>\n{\n  \"number\": 42\n}\n</arguments>\n</use_mcp_tool>\n\nLet me look at the files changed in this PR.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_pull_request_files</tool_name>\n<arguments>\n{\n  \"number\": 42\n}\n</arguments>\n</use_mcp_tool>\n\nBased on my analysis of the PRs, common performance improvement approaches include:\n1. Memoization of expensive components\n2. Optimized rendering algorithms\n3. Bundle size reduction\n4. Database query optimization",
+    "metadata": {
+      "server": "github",
+      "complexity": "complex",
+      "tool": "search_issues"
+    }
+  }
+]

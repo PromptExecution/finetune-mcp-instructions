@@ -1,0 +1,38 @@
+[
+  {
+    "instruction": "Check the status of the Git repository",
+    "completion": "I'll check the status of the Git repository.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>status</tool_name>\n<arguments>\n{}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "git",
+      "complexity": "simple",
+      "tool": "status"
+    }
+  },
+  {
+    "instruction": "Show the commit history for the main.py file",
+    "completion": "I'll show the commit history for the main.py file.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>log</tool_name>\n<arguments>\n{\n  \"file\": \"main.py\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "git",
+      "complexity": "simple",
+      "tool": "log"
+    }
+  },
+  {
+    "instruction": "Show changes to the README.md file in the last commit, and who last modified the file",
+    "completion": "I'll check the changes to README.md in the last commit, then find who last modified it.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>diff</tool_name>\n<arguments>\n{\n  \"file\": \"README.md\",\n  \"commit\": \"HEAD~1\",\n  \"compare_to\": \"HEAD\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll check who last modified the file.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>blame</tool_name>\n<arguments>\n{\n  \"file\": \"README.md\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "git",
+      "complexity": "multi_step",
+      "tool": "diff"
+    }
+  },
+  {
+    "instruction": "List all branches, show commits unique to the 'feature-x' branch compared to 'main', and summarize the changes",
+    "completion": "I'll analyze branches and compare feature-x to main.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>branch</tool_name>\n<arguments>\n{}\n</arguments>\n</use_mcp_tool>\n\nNow I'll find commits unique to feature-x compared to main.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>log</tool_name>\n<arguments>\n{\n  \"range\": \"main..feature-x\"\n}\n</arguments>\n</use_mcp_tool>\n\nLet me examine the changes in these commits.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>diff</tool_name>\n<arguments>\n{\n  \"commit\": \"main\",\n  \"compare_to\": \"feature-x\"\n}\n</arguments>\n</use_mcp_tool>\n\nBased on the analysis, feature-x adds 3 new features and modifies 2 existing files.",
+    "metadata": {
+      "server": "git",
+      "complexity": "complex",
+      "tool": "branch"
+    }
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "instruction": "Show me all users in the database",
+    "completion": "I'll execute a query to show all users in the database.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM users\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "database",
+      "complexity": "simple",
+      "tool": "execute_query"
+    }
+  },
+  {
+    "instruction": "Show me the schema of the products table",
+    "completion": "I'll show the schema of the products table.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>get_schema</tool_name>\n<arguments>\n{\n  \"table\": \"products\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "database",
+      "complexity": "simple",
+      "tool": "get_schema"
+    }
+  },
+  {
+    "instruction": "Find all orders with a total greater than $100 and count them",
+    "completion": "I'll find all orders with a total greater than $100 and then count them.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM orders WHERE total > 100\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll count these orders.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT COUNT(*) FROM orders WHERE total > 100\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "database",
+      "complexity": "multi_step",
+      "tool": "execute_query"
+    }
+  },
+  {
+    "instruction": "Find the top 5 customers by total order value, including their contact information",
+    "completion": "I'll join the customers and orders tables to find the top customers by order value.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT c.customer_id, c.name, c.email, SUM(o.total) as total_value FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name, c.email ORDER BY total_value DESC LIMIT 5\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll get more details about the top customer.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM customers WHERE customer_id = 42\"\n}\n</arguments>\n</use_mcp_tool>\n\nLet me also find the specific orders from this customer.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM orders WHERE customer_id = 42 ORDER BY total DESC\"\n}\n</arguments>\n</use_mcp_tool>\n\nBased on this analysis, customer #42 (Jane Smith) has the highest total order value at $15,420.75 across 28 orders.",
+    "metadata": {
+      "server": "database",
+      "complexity": "complex",
+      "tool": "execute_query"
+    }
+  }
+]

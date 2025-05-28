@@ -1,14 +1,33 @@
 # finetune-mcp-instructions
+
+### long term vision
+
+Hugging Face Transformers + PEFT/QLoRA – Use the Hugging Face Transformers library with the PEFT adapters (LoRA/QLoRA) to fine-tune large models on limited hardware
+huggingface.co
+github.com
+. PEFT lets us train only a small subset of parameters, making it feasible on consumer GPUs (e.g. the RTX 3090)
+huggingface.co
+github.com
+. For example, HF’s PEFT docs note that tuning adapters (LoRA matrices) for a large model is much cheaper than full fine-tuning
+huggingface.co
+github.com
+. PEFT integrates with Accelerate for multi-GPU or distributed training
+github.com
+, and with the Diffusers library (if needed for other tasks).
+
+
+### step 1: prepare a dataset
+
 a dataset &amp; tools for finetuning any instruction model on the nuances of mcp
 
 Instruction-Completion Dataset – Assemble a supervised dataset of (instruction, completion) pairs reflecting the MCP-style tasks. This may include examples derived from your documentation, SDK usage examples, and code-related queries. For instance, given an MCP server (e.g. “Git” or “Filesystem”), one instruction might be “List all functions defined in this utils.py file” and the completion the expected list of functions. The Model Context Protocol (“MCP”) GitHub includes reference servers like Git, GitHub, Filesystem, etc., which show how to query code repositories
-github.com. 
+github.com.
 
 We can use those (and our own docs) to craft prompts guiding the model to follow MCP conventions (e.g. calling tools, reading files, etc.).
 Formatting (MCP style) – Ensure the data mimics MCP prompt style. While standard instruction-tuning uses something like “Human: … Assistant: …”, MCP often involves structured JSON or step-by-step tool calls. We can flatten these into natural-text instructions (e.g. “Using the Git repository, find the commit history of file X”) with completions that would correspond to the MCP client’s expected JSON response. In training, each example should clearly delineate the “instruction” (what the LLM must do, possibly referencing a tool or code) and the “output” (the answer or next step).
 
 Loss Masking (Completion-Only) – When training, we typically do not train on the user’s prompt text. Instead, only the “assistant” part should incur loss. Hugging Face’s TRL library provides DataCollatorForCompletionOnlyLM, which masks the prompt tokens so that only the model’s response is learned
-discuss.huggingface.co. 
+discuss.huggingface.co.
 
 This matches how many instruction-tuning scripts work: set the labels of prompt tokens to -100 (ignore) and compute cross-entropy only on the answer tokens
 

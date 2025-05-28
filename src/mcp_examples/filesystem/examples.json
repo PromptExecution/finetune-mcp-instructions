@@ -1,0 +1,38 @@
+[
+  {
+    "instruction": "Read the content of the file README.md",
+    "completion": "I'll read the content of the README.md file using the Filesystem MCP server.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"README.md\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "filesystem",
+      "complexity": "simple",
+      "tool": "read_file"
+    }
+  },
+  {
+    "instruction": "List all files in the current directory",
+    "completion": "I'll list all files in the current directory using the Filesystem MCP server.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>list_files</tool_name>\n<arguments>\n{\n  \"path\": \".\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "filesystem",
+      "complexity": "simple",
+      "tool": "list_files"
+    }
+  },
+  {
+    "instruction": "Find all Python files in the src directory and show the content of the first one",
+    "completion": "I'll first search for Python files in the src directory, then read the content of the first one.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>search_files</tool_name>\n<arguments>\n{\n  \"path\": \"src\",\n  \"pattern\": \"*.py\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll read the content of the first Python file found.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"src/example.py\"\n}\n</arguments>\n</use_mcp_tool>",
+    "metadata": {
+      "server": "filesystem",
+      "complexity": "multi_step",
+      "tool": "search_files"
+    }
+  },
+  {
+    "instruction": "Find all JSON files in the data directory, read their contents, and count how many have a 'status' field set to 'success'",
+    "completion": "I'll search for JSON files, read each one, and count the files with 'status': 'success'.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>search_files</tool_name>\n<arguments>\n{\n  \"path\": \"data\",\n  \"pattern\": \"*.json\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll read each file and count those with status: 'success'.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"data/file1.json\"\n}\n</arguments>\n</use_mcp_tool>\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"data/file2.json\"\n}\n</arguments>\n</use_mcp_tool>\n\nAfter analyzing all files, I found 2 files with 'status': 'success'.",
+    "metadata": {
+      "server": "filesystem",
+      "complexity": "complex",
+      "tool": "search_files"
+    }
+  }
+]
