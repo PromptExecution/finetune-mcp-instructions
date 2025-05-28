@@ -1,120 +1,12 @@
 {
   "examples": [
     {
-      "instruction": "Find all orders with a total greater than $100 and count them",
-      "completion": "I'll find all orders with a total greater than $100 and then count them.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM orders WHERE total > 100\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll count these orders.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT COUNT(*) FROM orders WHERE total > 100\"\n}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "database",
-        "complexity": "multi_step",
-        "tool": "execute_query"
-      }
-    },
-    {
       "instruction": "Find all JSON files in the data directory, read their contents, and count how many have a 'status' field set to 'success'",
       "completion": "I'll search for JSON files, read each one, and count the files with 'status': 'success'.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>search_files</tool_name>\n<arguments>\n{\n  \"path\": \"data\",\n  \"pattern\": \"*.json\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll read each file and count those with status: 'success'.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"data/file1.json\"\n}\n</arguments>\n</use_mcp_tool>\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"data/file2.json\"\n}\n</arguments>\n</use_mcp_tool>\n\nAfter analyzing all files, I found 2 files with 'status': 'success'.",
       "metadata": {
         "server": "filesystem",
         "complexity": "complex",
         "tool": "search_files"
-      }
-    },
-    {
-      "instruction": "Find the top 5 customers by total order value, including their contact information",
-      "completion": "I'll join the customers and orders tables to find the top customers by order value.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT c.customer_id, c.name, c.email, SUM(o.total) as total_value FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name, c.email ORDER BY total_value DESC LIMIT 5\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll get more details about the top customer.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM customers WHERE customer_id = 42\"\n}\n</arguments>\n</use_mcp_tool>\n\nLet me also find the specific orders from this customer.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM orders WHERE customer_id = 42 ORDER BY total DESC\"\n}\n</arguments>\n</use_mcp_tool>\n\nBased on this analysis, customer #42 (Jane Smith) has the highest total order value at $15,420.75 across 28 orders.",
-      "metadata": {
-        "server": "database",
-        "complexity": "complex",
-        "tool": "execute_query"
-      }
-    },
-    {
-      "instruction": "Search for code that uses the 'useEffect' hook in the repository and show one of the files",
-      "completion": "I'll search for code using the useEffect hook, then view one of the files.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>search_code</tool_name>\n<arguments>\n{\n  \"query\": \"useEffect\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll view one of the files that contains the useEffect hook.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_content</tool_name>\n<arguments>\n{\n  \"path\": \"src/components/App.js\"\n}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "github",
-        "complexity": "multi_step",
-        "tool": "search_code"
-      }
-    },
-    {
-      "instruction": "Show changes to the README.md file in the last commit, and who last modified the file",
-      "completion": "I'll check the changes to README.md in the last commit, then find who last modified it.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>diff</tool_name>\n<arguments>\n{\n  \"file\": \"README.md\",\n  \"commit\": \"HEAD~1\",\n  \"compare_to\": \"HEAD\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll check who last modified the file.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>blame</tool_name>\n<arguments>\n{\n  \"file\": \"README.md\"\n}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "git",
-        "complexity": "multi_step",
-        "tool": "diff"
-      }
-    },
-    {
-      "instruction": "Show me the schema of the products table",
-      "completion": "I'll show the schema of the products table.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>get_schema</tool_name>\n<arguments>\n{\n  \"table\": \"products\"\n}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "database",
-        "complexity": "simple",
-        "tool": "get_schema"
-      }
-    },
-    {
-      "instruction": "Analyze this image, enhance its contrast, and identify any text in it",
-      "completion": "I'll analyze the image, enhance it, and extract any text.\n\n<use_mcp_tool>\n<server_name>image_processor</server_name>\n<tool_name>analyze</tool_name>\n<arguments>\n{\n  \"image_path\": \"uploads/image1.jpg\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll enhance the contrast.\n\n<use_mcp_tool>\n<server_name>image_processor</server_name>\n<tool_name>enhance</tool_name>\n<arguments>\n{\n  \"image_path\": \"uploads/image1.jpg\",\n  \"enhancement\": \"contrast\",\n  \"level\": 1.5\n}\n</arguments>\n</use_mcp_tool>\n\nLet me extract any text from the image.\n\n<use_mcp_tool>\n<server_name>image_processor</server_name>\n<tool_name>ocr</tool_name>\n<arguments>\n{\n  \"image_path\": \"uploads/enhanced_image1.jpg\"\n}\n</arguments>\n</use_mcp_tool>\n\nThe image has been enhanced, and I've extracted the text 'Welcome to San Francisco' from the sign in the image.",
-      "metadata": {
-        "server": "image_processor",
-        "complexity": "complex",
-        "tool": "analyze"
-      }
-    },
-    {
-      "instruction": "Should I plan an outdoor event this weekend in Boston?",
-      "completion": "I'll check the weekend forecast for Boston to help you decide.\n\n<use_mcp_tool>\n<server_name>weather</server_name>\n<tool_name>get_forecast</tool_name>\n<arguments>\n{\n  \"location\": \"Boston, MA\",\n  \"days\": 5\n}\n</arguments>\n</use_mcp_tool>\n\nLet me also check if there's any precipitation expected.\n\n<use_mcp_tool>\n<server_name>weather</server_name>\n<tool_name>get_precipitation</tool_name>\n<arguments>\n{\n  \"location\": \"Boston, MA\",\n  \"days\": 2,\n  \"start_day\": \"Saturday\"\n}\n</arguments>\n</use_mcp_tool>\n\nBased on the forecast, Saturday looks promising with sunny conditions and only a 10% chance of rain, but Sunday has a 60% chance of precipitation. I would recommend planning your outdoor event for Saturday.",
-      "metadata": {
-        "server": "weather",
-        "complexity": "multi_step",
-        "tool": "get_forecast"
-      }
-    },
-    {
-      "instruction": "Find all Python files in the src directory and show the content of the first one",
-      "completion": "I'll first search for Python files in the src directory, then read the content of the first one.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>search_files</tool_name>\n<arguments>\n{\n  \"path\": \"src\",\n  \"pattern\": \"*.py\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll read the content of the first Python file found.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"src/example.py\"\n}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "filesystem",
-        "complexity": "multi_step",
-        "tool": "search_files"
-      }
-    },
-    {
-      "instruction": "Show information about this GitHub repository",
-      "completion": "I'll show information about this GitHub repository.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_repo</tool_name>\n<arguments>\n{}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "github",
-        "complexity": "simple",
-        "tool": "get_repo"
-      }
-    },
-    {
-      "instruction": "Show the commit history for the main.py file",
-      "completion": "I'll show the commit history for the main.py file.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>log</tool_name>\n<arguments>\n{\n  \"file\": \"main.py\"\n}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "git",
-        "complexity": "simple",
-        "tool": "log"
-      }
-    },
-    {
-      "instruction": "Calculate the square root of 144",
-      "completion": "I'll calculate the square root of 144.\n\n<use_mcp_tool>\n<server_name>calculator</server_name>\n<tool_name>calculate</tool_name>\n<arguments>\n{\n  \"expression\": \"sqrt(144)\"\n}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "calculator",
-        "complexity": "simple",
-        "tool": "calculate"
-      }
-    },
-    {
-      "instruction": "Read the content of the file README.md",
-      "completion": "I'll read the content of the README.md file using the Filesystem MCP server.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"README.md\"\n}\n</arguments>\n</use_mcp_tool>",
-      "metadata": {
-        "server": "filesystem",
-        "complexity": "simple",
-        "tool": "read_file"
       }
     },
     {
@@ -127,30 +19,39 @@
       }
     },
     {
-      "instruction": "Show me all users in the database",
-      "completion": "I'll execute a query to show all users in the database.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM users\"\n}\n</arguments>\n</use_mcp_tool>",
+      "instruction": "Show me the schema of the products table",
+      "completion": "I'll show the schema of the products table.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>get_schema</tool_name>\n<arguments>\n{\n  \"table\": \"products\"\n}\n</arguments>\n</use_mcp_tool>",
       "metadata": {
         "server": "database",
         "complexity": "simple",
-        "tool": "execute_query"
+        "tool": "get_schema"
       }
     },
     {
-      "instruction": "Find all pull requests related to performance improvements, show their changes, and summarize the approaches used",
-      "completion": "I'll analyze pull requests related to performance improvements.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>search_issues</tool_name>\n<arguments>\n{\n  \"query\": \"is:pr performance\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll examine the changes in PR #42.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_pull_request</tool_name>\n<arguments>\n{\n  \"number\": 42\n}\n</arguments>\n</use_mcp_tool>\n\nLet me look at the files changed in this PR.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_pull_request_files</tool_name>\n<arguments>\n{\n  \"number\": 42\n}\n</arguments>\n</use_mcp_tool>\n\nBased on my analysis of the PRs, common performance improvement approaches include:\n1. Memoization of expensive components\n2. Optimized rendering algorithms\n3. Bundle size reduction\n4. Database query optimization",
-      "metadata": {
-        "server": "github",
-        "complexity": "complex",
-        "tool": "search_issues"
-      }
-    },
-    {
-      "instruction": "Check the status of the Git repository",
-      "completion": "I'll check the status of the Git repository.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>status</tool_name>\n<arguments>\n{}\n</arguments>\n</use_mcp_tool>",
+      "instruction": "Show changes to the README.md file in the last commit, and who last modified the file",
+      "completion": "I'll check the changes to README.md in the last commit, then find who last modified it.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>diff</tool_name>\n<arguments>\n{\n  \"file\": \"README.md\",\n  \"commit\": \"HEAD~1\",\n  \"compare_to\": \"HEAD\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll check who last modified the file.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>blame</tool_name>\n<arguments>\n{\n  \"file\": \"README.md\"\n}\n</arguments>\n</use_mcp_tool>",
       "metadata": {
         "server": "git",
-        "complexity": "simple",
-        "tool": "status"
+        "complexity": "multi_step",
+        "tool": "diff"
+      }
+    },
+    {
+      "instruction": "Analyze this image, enhance its contrast, and identify any text in it",
+      "completion": "I'll analyze the image, enhance it, and extract any text.\n\n<use_mcp_tool>\n<server_name>image_processor</server_name>\n<tool_name>analyze</tool_name>\n<arguments>\n{\n  \"image_path\": \"uploads/image1.jpg\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll enhance the contrast.\n\n<use_mcp_tool>\n<server_name>image_processor</server_name>\n<tool_name>enhance</tool_name>\n<arguments>\n{\n  \"image_path\": \"uploads/image1.jpg\",\n  \"enhancement\": \"contrast\",\n  \"level\": 1.5\n}\n</arguments>\n</use_mcp_tool>\n\nLet me extract any text from the image.\n\n<use_mcp_tool>\n<server_name>image_processor</server_name>\n<tool_name>ocr</tool_name>\n<arguments>\n{\n  \"image_path\": \"uploads/enhanced_image1.jpg\"\n}\n</arguments>\n</use_mcp_tool>\n\nThe image has been enhanced, and I've extracted the text 'Welcome to San Francisco' from the sign in the image.",
+      "metadata": {
+        "server": "image_processor",
+        "complexity": "complex",
+        "tool": "analyze"
+      }
+    },
+    {
+      "instruction": "Find all Python files in the src directory and show the content of the first one",
+      "completion": "I'll first search for Python files in the src directory, then read the content of the first one.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>search_files</tool_name>\n<arguments>\n{\n  \"path\": \"src\",\n  \"pattern\": \"*.py\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll read the content of the first Python file found.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"src/example.py\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "filesystem",
+        "complexity": "multi_step",
+        "tool": "search_files"
       }
     },
     {
@@ -163,6 +64,15 @@
       }
     },
     {
+      "instruction": "Should I plan an outdoor event this weekend in Boston?",
+      "completion": "I'll check the weekend forecast for Boston to help you decide.\n\n<use_mcp_tool>\n<server_name>weather</server_name>\n<tool_name>get_forecast</tool_name>\n<arguments>\n{\n  \"location\": \"Boston, MA\",\n  \"days\": 5\n}\n</arguments>\n</use_mcp_tool>\n\nLet me also check if there's any precipitation expected.\n\n<use_mcp_tool>\n<server_name>weather</server_name>\n<tool_name>get_precipitation</tool_name>\n<arguments>\n{\n  \"location\": \"Boston, MA\",\n  \"days\": 2,\n  \"start_day\": \"Saturday\"\n}\n</arguments>\n</use_mcp_tool>\n\nBased on the forecast, Saturday looks promising with sunny conditions and only a 10% chance of rain, but Sunday has a 60% chance of precipitation. I would recommend planning your outdoor event for Saturday.",
+      "metadata": {
+        "server": "weather",
+        "complexity": "multi_step",
+        "tool": "get_forecast"
+      }
+    },
+    {
       "instruction": "List all files in the current directory",
       "completion": "I'll list all files in the current directory using the Filesystem MCP server.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>list_files</tool_name>\n<arguments>\n{\n  \"path\": \".\"\n}\n</arguments>\n</use_mcp_tool>",
       "metadata": {
@@ -172,12 +82,102 @@
       }
     },
     {
+      "instruction": "Find all pull requests related to performance improvements, show their changes, and summarize the approaches used",
+      "completion": "I'll analyze pull requests related to performance improvements.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>search_issues</tool_name>\n<arguments>\n{\n  \"query\": \"is:pr performance\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll examine the changes in PR #42.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_pull_request</tool_name>\n<arguments>\n{\n  \"number\": 42\n}\n</arguments>\n</use_mcp_tool>\n\nLet me look at the files changed in this PR.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_pull_request_files</tool_name>\n<arguments>\n{\n  \"number\": 42\n}\n</arguments>\n</use_mcp_tool>\n\nBased on my analysis of the PRs, common performance improvement approaches include:\n1. Memoization of expensive components\n2. Optimized rendering algorithms\n3. Bundle size reduction\n4. Database query optimization",
+      "metadata": {
+        "server": "github",
+        "complexity": "complex",
+        "tool": "search_issues"
+      }
+    },
+    {
+      "instruction": "Show the commit history for the main.py file",
+      "completion": "I'll show the commit history for the main.py file.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>log</tool_name>\n<arguments>\n{\n  \"file\": \"main.py\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "git",
+        "complexity": "simple",
+        "tool": "log"
+      }
+    },
+    {
+      "instruction": "Find all orders with a total greater than $100 and count them",
+      "completion": "I'll find all orders with a total greater than $100 and then count them.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM orders WHERE total > 100\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll count these orders.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT COUNT(*) FROM orders WHERE total > 100\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "database",
+        "complexity": "multi_step",
+        "tool": "execute_query"
+      }
+    },
+    {
+      "instruction": "Read the content of the file README.md",
+      "completion": "I'll read the content of the README.md file using the Filesystem MCP server.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"README.md\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "filesystem",
+        "complexity": "simple",
+        "tool": "read_file"
+      }
+    },
+    {
       "instruction": "List open issues in the repository",
       "completion": "I'll list the open issues in this repository.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>list_issues</tool_name>\n<arguments>\n{\n  \"state\": \"open\"\n}\n</arguments>\n</use_mcp_tool>",
       "metadata": {
         "server": "github",
         "complexity": "simple",
         "tool": "list_issues"
+      }
+    },
+    {
+      "instruction": "Find the top 5 customers by total order value, including their contact information",
+      "completion": "I'll join the customers and orders tables to find the top customers by order value.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT c.customer_id, c.name, c.email, SUM(o.total) as total_value FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name, c.email ORDER BY total_value DESC LIMIT 5\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll get more details about the top customer.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM customers WHERE customer_id = 42\"\n}\n</arguments>\n</use_mcp_tool>\n\nLet me also find the specific orders from this customer.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM orders WHERE customer_id = 42 ORDER BY total DESC\"\n}\n</arguments>\n</use_mcp_tool>\n\nBased on this analysis, customer #42 (Jane Smith) has the highest total order value at $15,420.75 across 28 orders.",
+      "metadata": {
+        "server": "database",
+        "complexity": "complex",
+        "tool": "execute_query"
+      }
+    },
+    {
+      "instruction": "Check the status of the Git repository",
+      "completion": "I'll check the status of the Git repository.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>status</tool_name>\n<arguments>\n{}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "git",
+        "complexity": "simple",
+        "tool": "status"
+      }
+    },
+    {
+      "instruction": "Show information about this GitHub repository",
+      "completion": "I'll show information about this GitHub repository.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_repo</tool_name>\n<arguments>\n{}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "github",
+        "complexity": "simple",
+        "tool": "get_repo"
+      }
+    },
+    {
+      "instruction": "Show me all users in the database",
+      "completion": "I'll execute a query to show all users in the database.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT * FROM users\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "database",
+        "complexity": "simple",
+        "tool": "execute_query"
+      }
+    },
+    {
+      "instruction": "Calculate the square root of 144",
+      "completion": "I'll calculate the square root of 144.\n\n<use_mcp_tool>\n<server_name>calculator</server_name>\n<tool_name>calculate</tool_name>\n<arguments>\n{\n  \"expression\": \"sqrt(144)\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "calculator",
+        "complexity": "simple",
+        "tool": "calculate"
+      }
+    },
+    {
+      "instruction": "Search for code that uses the 'useEffect' hook in the repository and show one of the files",
+      "completion": "I'll search for code using the useEffect hook, then view one of the files.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>search_code</tool_name>\n<arguments>\n{\n  \"query\": \"useEffect\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll view one of the files that contains the useEffect hook.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>get_content</tool_name>\n<arguments>\n{\n  \"path\": \"src/components/App.js\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "github",
+        "complexity": "multi_step",
+        "tool": "search_code"
       }
     }
   ]

@@ -1,40 +1,93 @@
-# finetune-mcp-instructions
+# MCP (Model Context Protocol) Dataset Fine-tuning Toolkit
 
-### long term vision
+A comprehensive toolkit for creating datasets, training, and evaluating fine-tuned models for the Model Context Protocol.
 
-Hugging Face Transformers + PEFT/QLoRA – Use the Hugging Face Transformers library with the PEFT adapters (LoRA/QLoRA) to fine-tune large models on limited hardware
-huggingface.co
-github.com
-. PEFT lets us train only a small subset of parameters, making it feasible on consumer GPUs (e.g. the RTX 3090)
-huggingface.co
-github.com
-. For example, HF’s PEFT docs note that tuning adapters (LoRA matrices) for a large model is much cheaper than full fine-tuning
-huggingface.co
-github.com
-. PEFT integrates with Accelerate for multi-GPU or distributed training
-github.com
-, and with the Diffusers library (if needed for other tasks).
+## Overview
 
+This toolkit provides end-to-end functionality for fine-tuning large language models on MCP-style instructions using PEFT/QLoRA methods. The system enables efficient fine-tuning on consumer hardware (e.g., RTX 3090) by leveraging parameter-efficient methods.
 
-### step 1: prepare a dataset
+## Features
 
-a dataset &amp; tools for finetuning any instruction model on the nuances of mcp
+- **Dataset Generation**: Create supervised instruction-completion pairs for MCP tasks
+- **Example Templating**: Generate templates for various MCP servers (Filesystem, Git, GitHub, Database, etc.)
+- **Validation Tools**: Ensure dataset quality and formatting consistency
+- **Training Integration**: Fine-tune models using HuggingFace PEFT/QLoRA
+- **Evaluation Framework**: Compare fine-tuned models against baselines on MCP tasks
 
-Instruction-Completion Dataset – Assemble a supervised dataset of (instruction, completion) pairs reflecting the MCP-style tasks. This may include examples derived from your documentation, SDK usage examples, and code-related queries. For instance, given an MCP server (e.g. “Git” or “Filesystem”), one instruction might be “List all functions defined in this utils.py file” and the completion the expected list of functions. The Model Context Protocol (“MCP”) GitHub includes reference servers like Git, GitHub, Filesystem, etc., which show how to query code repositories
-github.com.
+## Architecture
 
-We can use those (and our own docs) to craft prompts guiding the model to follow MCP conventions (e.g. calling tools, reading files, etc.).
-Formatting (MCP style) – Ensure the data mimics MCP prompt style. While standard instruction-tuning uses something like “Human: … Assistant: …”, MCP often involves structured JSON or step-by-step tool calls. We can flatten these into natural-text instructions (e.g. “Using the Git repository, find the commit history of file X”) with completions that would correspond to the MCP client’s expected JSON response. In training, each example should clearly delineate the “instruction” (what the LLM must do, possibly referencing a tool or code) and the “output” (the answer or next step).
+The toolkit uses:
+- **UV** for Python environment management
+- **PEFT/QLoRA** for parameter-efficient fine-tuning
+- **HuggingFace Transformers** for model management
+- **Justfile** for workflow orchestration
+- **Pytest** for component testing
 
-Loss Masking (Completion-Only) – When training, we typically do not train on the user’s prompt text. Instead, only the “assistant” part should incur loss. Hugging Face’s TRL library provides DataCollatorForCompletionOnlyLM, which masks the prompt tokens so that only the model’s response is learned
-discuss.huggingface.co.
+## Getting Started
 
-This matches how many instruction-tuning scripts work: set the labels of prompt tokens to -100 (ignore) and compute cross-entropy only on the answer tokens
+```bash
+# Set up the environment with UV
+just setup
 
-discuss.huggingface.co
-discuss.huggingface.co
-. Doing so avoids the model wasting capacity on copying the prompt and focuses it on generating the correct completion.
-Domain-Specific Tokens/Embeddings – To make the model code-aware, you could add special tokens (e.g. <func>, <class>, or tokens for common library names) to the tokenizer and fine-tune their embeddings. This effectively gives the model new “words” for code concepts. In practice, however, LoRA/QLoRA fine-tuning on code tasks often suffices without changing the vocab. If desired, you could train an auxiliary embedding matrix for domain terms, but in most pipelines the domain knowledge comes through the fine-tuning examples themselves. (Layering custom embedding modules or adapters for code is possible but experimental.)
-Dataset Tools – Use standard libs (Hugging Face Datasets, Pandas) to load and preprocess data. Ensure all prompts and completions use the model’s tokenizer (e.g. Mistral’s Tekken tokenizer) and respect its max context (Devstral uses a 128k window
-huggingface.co
-, though practical fine-tuning may use much shorter spans). Keep the instruction format consistent. Include error checking/validation (token lengths, etc.) in preprocessing.
+# Generate MCP example templates
+just generate-examples
+
+# Generate dataset from examples
+just generate-dataset
+
+# Validate the dataset
+just validate-dataset
+
+# Run all tests
+just test-all
+
+# Run the entire pipeline
+just complete-workflow
+```
+
+## Technical Details
+
+### Dataset Format
+
+The dataset consists of instruction-completion pairs following MCP conventions:
+
+```json
+{
+  "examples": [
+    {
+      "instruction": "Find commit history of main.py file from the last week",
+      "completion": "I'll find the commit history...\n\n<use_mcp_tool>\n<server_name>git</server_name>...",
+      "metadata": {
+        "server": "git",
+        "tool": "log",
+        "complexity": "simple"
+      }
+    }
+  ]
+}
+```
+
+### Fine-tuning Approach
+
+- **Loss Masking**: Using DataCollatorForCompletionOnlyLM to mask prompt tokens (setting to -100)
+- **Parameter Efficiency**: LoRA adapters focus training on a small subset of model parameters
+- **Hardware Requirements**: Optimized for consumer GPUs (e.g., RTX 3090)
+- **Integration**: Supports Accelerate for multi-GPU or distributed training
+
+### MCP Server Categories
+
+The toolkit supports examples from multiple MCP servers:
+
+1. **Filesystem**: File operations, directory management, path manipulation
+2. **Git**: Repository operations, commit history, diffs, branch management
+3. **GitHub**: Issues, PRs, repository exploration, code search
+4. **Database**: Query execution, schema exploration
+5. **Custom Tools**: Weather data, calculator functions, image processing
+
+## Contributing
+
+See the [TODO.md](TODO.md) file for upcoming features and improvements.
+
+## License
+
+[MIT License](LICENSE)
