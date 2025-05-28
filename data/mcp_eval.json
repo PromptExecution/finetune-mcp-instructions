@@ -1,0 +1,139 @@
+{
+  "examples": [
+    {
+      "instruction": "Find all Python files in the src directory that contain the word 'model'",
+      "completion": "I'll search for Python files in the src directory containing the word 'model'.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>search_files</tool_name>\n<arguments>\n{\n  \"path\": \"src\",\n  \"regex\": \"model\",\n  \"file_pattern\": \"*.py\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "filesystem",
+        "tool": "search_files",
+        "complexity": "simple"
+      }
+    },
+    {
+      "instruction": "Show me the last 3 commits in the main branch",
+      "completion": "Let me show you the last 3 commits in the main branch.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>log</tool_name>\n<arguments>\n{\n  \"max_count\": 3,\n  \"branch\": \"main\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "git",
+        "tool": "log",
+        "complexity": "simple"
+      }
+    },
+    {
+      "instruction": "Find open issues on GitHub with the label 'bug'",
+      "completion": "Let me find open issues with the 'bug' label on GitHub.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>search_issues</tool_name>\n<arguments>\n{\n  \"query\": \"is:issue is:open label:bug\",\n  \"sort\": \"created\",\n  \"order\": \"desc\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "github",
+        "tool": "search_issues",
+        "complexity": "simple"
+      }
+    },
+    {
+      "instruction": "Get the schema for the users table in the database",
+      "completion": "I'll retrieve the schema for the users table.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>get_table_schema</tool_name>\n<arguments>\n{\n  \"table_name\": \"users\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "database",
+        "tool": "get_table_schema",
+        "complexity": "simple"
+      }
+    },
+    {
+      "instruction": "What's the weather forecast for San Francisco this weekend?",
+      "completion": "Let me check the weather forecast for San Francisco this weekend.\n\n<use_mcp_tool>\n<server_name>weather</server_name>\n<tool_name>get_forecast</tool_name>\n<arguments>\n{\n  \"location\": \"San Francisco, CA\",\n  \"days\": 3\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "weather",
+        "tool": "get_forecast",
+        "complexity": "simple"
+      }
+    },
+    {
+      "instruction": "Find the file with the most recent modification in the src/utils directory, and show me its content",
+      "completion": "I'll find the most recently modified file in the src/utils directory and show its content.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>list_files</tool_name>\n<arguments>\n{\n  \"path\": \"src/utils\",\n  \"sort_by\": \"modified\",\n  \"order\": \"desc\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow that I have the most recently modified file, I'll show its content.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"src/utils/[MOST_RECENT_FILE]\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "filesystem",
+        "tool": "list_files,read_file",
+        "complexity": "multi_step"
+      }
+    },
+    {
+      "instruction": "Find all unresolved merge conflicts in the repository",
+      "completion": "I'll help you find unresolved merge conflicts in the repository.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>status</tool_name>\n<arguments>\n{\n  \"porcelain\": true\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll examine the files with conflicts.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>diff</tool_name>\n<arguments>\n{\n  \"name_only\": true,\n  \"diff_filter\": \"U\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "git",
+        "tool": "status,diff",
+        "complexity": "multi_step"
+      }
+    },
+    {
+      "instruction": "Check if any GitHub issues mention a memory leak, then tell me about the related commits",
+      "completion": "I'll search for GitHub issues mentioning memory leaks and then find related commits.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>search_issues</tool_name>\n<arguments>\n{\n  \"query\": \"memory leak\",\n  \"state\": \"all\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow that I have the issues, let me find commits that reference these issues.\n\n<use_mcp_tool>\n<server_name>git</server_name>\n<tool_name>log</tool_name>\n<arguments>\n{\n  \"grep\": \"#[ISSUE_NUMBER]\",\n  \"all\": true\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "github,git",
+        "tool": "search_issues,log",
+        "complexity": "multi_step"
+      }
+    },
+    {
+      "instruction": "Find users in the database who have made a purchase in the last month but haven't logged in since",
+      "completion": "I'll find users who made purchases last month but haven't logged in since then.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>execute_query</tool_name>\n<arguments>\n{\n  \"query\": \"SELECT u.id, u.email, MAX(p.purchase_date) as last_purchase, MAX(l.login_date) as last_login FROM users u JOIN purchases p ON u.id = p.user_id LEFT JOIN logins l ON u.id = l.user_id WHERE p.purchase_date >= DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH) GROUP BY u.id, u.email HAVING MAX(l.login_date) < MAX(p.purchase_date) OR MAX(l.login_date) IS NULL;\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "database",
+        "tool": "execute_query",
+        "complexity": "multi_step"
+      }
+    },
+    {
+      "instruction": "Get the current temperature in Tokyo and compare it with the historic average for this time of year",
+      "completion": "I'll get the current temperature in Tokyo and compare it with the historic average.\n\n<use_mcp_tool>\n<server_name>weather</server_name>\n<tool_name>get_current_conditions</tool_name>\n<arguments>\n{\n  \"location\": \"Tokyo, Japan\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll check the historical data for comparison.\n\n<use_mcp_tool>\n<server_name>weather</server_name>\n<tool_name>get_historical_average</tool_name>\n<arguments>\n{\n  \"location\": \"Tokyo, Japan\",\n  \"month\": \"current\",\n  \"day\": \"current\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "weather",
+        "tool": "get_current_conditions,get_historical_average",
+        "complexity": "multi_step"
+      }
+    },
+    {
+      "instruction": "Find Python files with TODO comments, create GitHub issues for each one, and tag them appropriately",
+      "completion": "I'll find Python files with TODO comments, create GitHub issues for each, and tag them appropriately.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>search_files</tool_name>\n<arguments>\n{\n  \"path\": \".\",\n  \"regex\": \"# ?TODO:\",\n  \"file_pattern\": \"*.py\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow for each TODO comment found, I'll create a GitHub issue.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>create_issue</tool_name>\n<arguments>\n{\n  \"title\": \"TODO: [Description from comment]\",\n  \"body\": \"Found in file: [filename]\\nLine: [line_number]\\n\\n```python\\n[code context]\\n```\",\n  \"labels\": [\"enhancement\", \"todo\"]\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "filesystem,github",
+        "tool": "search_files,create_issue",
+        "complexity": "complex"
+      }
+    },
+    {
+      "instruction": "Analyze the repository for security vulnerabilities in dependencies, generate a report, and open GitHub issues for critical ones",
+      "completion": "I'll analyze the repository for security vulnerabilities, generate a report, and open GitHub issues for critical ones.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"requirements.txt\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll check for vulnerabilities in these dependencies.\n\n<use_mcp_tool>\n<server_name>security</server_name>\n<tool_name>scan_dependencies</tool_name>\n<arguments>\n{\n  \"dependencies_file\": \"requirements.txt\"\n}\n</arguments>\n</use_mcp_tool>\n\nFor each critical vulnerability, I'll create a GitHub issue.\n\n<use_mcp_tool>\n<server_name>github</server_name>\n<tool_name>create_issue</tool_name>\n<arguments>\n{\n  \"title\": \"Security Vulnerability: [package name] [vulnerability ID]\",\n  \"body\": \"**Severity**: Critical\\n**Package**: [package name]\\n**Version**: [affected version]\\n**Description**: [vulnerability description]\\n\\n**Recommended Action**: Update to version [safe version] or later.\",\n  \"labels\": [\"security\", \"critical\"]\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "filesystem,security,github",
+        "tool": "read_file,scan_dependencies,create_issue",
+        "complexity": "complex"
+      }
+    },
+    {
+      "instruction": "Identify the slowest database queries in the application logs, analyze their execution plans, and suggest optimizations",
+      "completion": "I'll identify slow database queries in the logs, analyze their execution plans, and suggest optimizations.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>search_files</tool_name>\n<arguments>\n{\n  \"path\": \"logs\",\n  \"regex\": \"execution time: [0-9]{3,}ms\",\n  \"file_pattern\": \"*.log\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow for the slowest queries, I'll get their execution plans.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>explain_query</tool_name>\n<arguments>\n{\n  \"query\": \"[EXTRACTED_QUERY]\"\n}\n</arguments>\n</use_mcp_tool>\n\nLet me analyze the table structure for potential optimizations.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>get_table_schema</tool_name>\n<arguments>\n{\n  \"table_name\": \"[TABLE_FROM_QUERY]\"\n}\n</arguments>\n</use_mcp_tool>\n\nI'll check existing indexes on this table.\n\n<use_mcp_tool>\n<server_name>database</server_name>\n<tool_name>get_indexes</tool_name>\n<arguments>\n{\n  \"table_name\": \"[TABLE_FROM_QUERY]\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "filesystem,database",
+        "tool": "search_files,explain_query,get_table_schema,get_indexes",
+        "complexity": "complex"
+      }
+    },
+    {
+      "instruction": "Create a comprehensive performance report by collecting system metrics, analyzing response times, and generating visualizations",
+      "completion": "I'll create a comprehensive performance report with system metrics, response time analysis, and visualizations.\n\n<use_mcp_tool>\n<server_name>monitoring</server_name>\n<tool_name>get_system_metrics</tool_name>\n<arguments>\n{\n  \"period\": \"24h\",\n  \"metrics\": [\"cpu\", \"memory\", \"disk_io\", \"network\"]\n}\n</arguments>\n</use_mcp_tool>\n\nLet me also get application response times.\n\n<use_mcp_tool>\n<server_name>monitoring</server_name>\n<tool_name>get_response_times</tool_name>\n<arguments>\n{\n  \"period\": \"24h\",\n  \"endpoints\": \"all\",\n  \"percentiles\": [50, 95, 99]\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll generate visualizations of this data.\n\n<use_mcp_tool>\n<server_name>visualization</server_name>\n<tool_name>create_chart</tool_name>\n<arguments>\n{\n  \"type\": \"line\",\n  \"data\": \"[SYSTEM_METRICS_DATA]\",\n  \"title\": \"System Performance (24h)\",\n  \"x_label\": \"Time\",\n  \"y_label\": \"Utilization %\"\n}\n</arguments>\n</use_mcp_tool>\n\nAnd a separate chart for response times.\n\n<use_mcp_tool>\n<server_name>visualization</server_name>\n<tool_name>create_chart</tool_name>\n<arguments>\n{\n  \"type\": \"bar\",\n  \"data\": \"[RESPONSE_TIME_DATA]\",\n  \"title\": \"API Response Times by Endpoint (p95)\",\n  \"x_label\": \"Endpoint\",\n  \"y_label\": \"Response Time (ms)\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "monitoring,visualization",
+        "tool": "get_system_metrics,get_response_times,create_chart",
+        "complexity": "complex"
+      }
+    },
+    {
+      "instruction": "Analyze code quality across the repository, identify files with the highest complexity, and suggest refactoring strategies",
+      "completion": "I'll analyze code quality across the repository, identify files with the highest complexity, and suggest refactoring strategies.\n\n<use_mcp_tool>\n<server_name>code_analysis</server_name>\n<tool_name>analyze_repository</tool_name>\n<arguments>\n{\n  \"path\": \".\",\n  \"metrics\": [\"complexity\", \"maintainability\", \"duplication\"]\n}\n</arguments>\n</use_mcp_tool>\n\nLet me examine the most complex file in more detail.\n\n<use_mcp_tool>\n<server_name>filesystem</server_name>\n<tool_name>read_file</tool_name>\n<arguments>\n{\n  \"path\": \"[MOST_COMPLEX_FILE_PATH]\"\n}\n</arguments>\n</use_mcp_tool>\n\nNow I'll get function-level complexity metrics for this file.\n\n<use_mcp_tool>\n<server_name>code_analysis</server_name>\n<tool_name>analyze_file</tool_name>\n<arguments>\n{\n  \"path\": \"[MOST_COMPLEX_FILE_PATH]\",\n  \"detailed\": true\n}\n</arguments>\n</use_mcp_tool>\n\nI'll also check for test coverage to see if refactoring is well-supported.\n\n<use_mcp_tool>\n<server_name>code_analysis</server_name>\n<tool_name>get_test_coverage</tool_name>\n<arguments>\n{\n  \"path\": \"[MOST_COMPLEX_FILE_PATH]\"\n}\n</arguments>\n</use_mcp_tool>",
+      "metadata": {
+        "server": "code_analysis,filesystem",
+        "tool": "analyze_repository,read_file,analyze_file,get_test_coverage",
+        "complexity": "complex"
+      }
+    }
+  ]
+}
