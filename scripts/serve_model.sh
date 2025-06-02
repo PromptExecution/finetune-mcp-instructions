@@ -22,7 +22,7 @@ if ! command -v python -c "import vllm" &> /dev/null; then
   echo "VLLM is not installed. Would you like to install it now? (y/n)"
   read -r INSTALL
   if [[ "$INSTALL" == "y" || "$INSTALL" == "Y" ]]; then
-    pip install vllm
+    uv pip install vllm
   else
     echo "Error: VLLM is required to serve the model"
     exit 1

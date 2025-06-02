@@ -10,10 +10,8 @@ import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 
-# XML-style tag patterns
+# XML-style tag pattern
 MCP_TAG_PATTERN = re.compile(r'<(\w+)>(.*?)</\1>', re.DOTALL)
-OPENING_TAG_PATTERN = re.compile(r'<(\w+)>')
-CLOSING_TAG_PATTERN = re.compile(r'</(\w+)>')
 
 def validate_mcp_format(text: str) -> Tuple[bool, str]:
     """
@@ -25,8 +23,8 @@ def validate_mcp_format(text: str) -> Tuple[bool, str]:
     Returns:
         Tuple of (is_valid, error_message)
     """
-    # First check if there are any tags at all
-    if not OPENING_TAG_PATTERN.search(text) and not CLOSING_TAG_PATTERN.search(text):
+    # Check for XML-style tags
+    if not MCP_TAG_PATTERN.search(text):
         return False, "No valid XML-style tags found"
 
     # Check for balanced opening and closing tags

@@ -1,11 +1,17 @@
 #!/bin/bash
 # Script to prepare the training environment for fine-tuning
-# Usage: ./scripts/prepare_training.sh [OUTPUT_DIR]
+# Usage: ./scripts/prepare_training.sh [OUTPUT_DIR] [MODEL_NAME_FOR_CONFIG] [DATA_PATH_FOR_CONFIG]
 
 set -e
 
 # Default values
-OUTPUT_DIR=${1:-"finetune_output"}
+OUTPUT_DIR_ARG=${1}
+MODEL_NAME_ARG=${2}
+DATA_PATH_ARG=${3}
+
+OUTPUT_DIR=${OUTPUT_DIR_ARG:-"finetune_output"}
+MODEL_NAME_FOR_CONFIG=${MODEL_NAME_ARG:-"mistralai/Devstral-Small-2505"}
+DATA_PATH_FOR_CONFIG=${DATA_PATH_ARG:-"data/preprocessed_mcp_dataset.json"}
 
 echo "Preparing training environment"
 echo "Output directory: $OUTPUT_DIR"
@@ -38,7 +44,8 @@ if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
   echo "Would you like to install them now? (y/n)"
   read -r INSTALL
   if [[ "$INSTALL" == "y" || "$INSTALL" == "Y" ]]; then
-    pip install "${MISSING_PACKAGES[@]}"
+    echo "Attempting to install missing packages..."
+    uv pip install "${MISSING_PACKAGES[@]}" || { echo "Failed to install packages. Please install them manually."; exit 1; }
   else
     echo "Warning: Missing packages may cause training to fail"
   fi
@@ -50,7 +57,7 @@ echo "Creating default training configuration..."
 cat > "$CONFIG_FILE" << EOL
 {
   "model_config": {
-    "model_name_or_path": "mistralai/Mistral-7B-v0.1",
+    "model_name_or_path": "$MODEL_NAME_FOR_CONFIG",
     "trust_remote_code": true
   },
   "training_config": {
@@ -80,7 +87,7 @@ cat > "$CONFIG_FILE" << EOL
     "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"]
   },
   "data_config": {
-    "train_file": "data/mcp_dataset.json",
+    "train_file": "$DATA_PATH_FOR_CONFIG",
     "max_seq_length": 2048,
     "preprocessing_num_workers": 4
   }

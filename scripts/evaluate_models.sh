@@ -5,7 +5,7 @@
 set -e
 
 # Default values
-BASE_MODEL=${1:-"mistralai/Mistral-7B-v0.1"}
+BASE_MODEL=${1:-"mistralai/devstral"}
 FINETUNED_MODEL=${2:-"finetune_output/final"}
 TEST_DATA=${3:-"data/eval_samples.json"}
 OUTPUT_DIR="evaluation_results"

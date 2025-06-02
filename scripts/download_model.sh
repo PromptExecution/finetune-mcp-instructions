@@ -11,7 +11,7 @@ OUTPUT_DIR=${2:-"models"}
 if [ -z "$MODEL_NAME" ]; then
   echo "Error: MODEL_NAME is required"
   echo "Usage: $0 MODEL_NAME [OUTPUT_DIR]"
-  echo "Example: $0 mistralai/Mistral-7B-v0.1 ./models"
+  echo "Example: $0 mistralai/Devstral-Small-2505 ./models"
   exit 1
 fi
 
