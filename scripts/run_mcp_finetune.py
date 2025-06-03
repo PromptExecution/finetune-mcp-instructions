@@ -1,61 +1,3 @@
-#!/bin/bash
-# Script to fine-tune a model using PEFT/QLoRA on MCP dataset
-# Usage: ./scripts/finetune_model.sh MODEL_NAME DATA_PATH OUTPUT_DIR
-
-set -e
-echo "Using Python interpreter: $(which python3)"
-echo "Installed packages:"
-uv pip list
-
-# Default values
-_DEFAULT_MODEL_NAME="mistralai/Devstral-Small-2505"
-_DEFAULT_DATA_PATH="data/preprocessed_mcp_dataset.json" # Corrected default to preprocessed
-_DEFAULT_OUTPUT_DIR="finetune_output"
-
-# Parse arguments, handling 'key=value' from just and allowing for positional
-_arg1_raw=${1}
-_arg2_raw=${2}
-_arg3_raw=${3}
-
-# Strip 'key=' prefix. If no prefix, original value is retained.
-MODEL_NAME=${_arg1_raw#*=}
-DATA_PATH=${_arg2_raw#*=}
-OUTPUT_DIR=${_arg3_raw#*=}
-
-# Apply defaults if the initial argument was not provided (raw is empty),
-# or if the stripped value is empty (e.g. arg was "key=").
-if [ -z "${_arg1_raw}" ]; then MODEL_NAME=$_DEFAULT_MODEL_NAME; elif [ -z "$MODEL_NAME" ] && [ "${_arg1_raw}" != "${MODEL_NAME}" ]; then MODEL_NAME=$_DEFAULT_MODEL_NAME; fi
-if [ -z "${_arg2_raw}" ]; then DATA_PATH=$_DEFAULT_DATA_PATH; elif [ -z "$DATA_PATH" ] && [ "${_arg2_raw}" != "${DATA_PATH}" ]; then DATA_PATH=$_DEFAULT_DATA_PATH; fi
-if [ -z "${_arg3_raw}" ]; then OUTPUT_DIR=$_DEFAULT_OUTPUT_DIR; elif [ -z "$OUTPUT_DIR" ] && [ "${_arg3_raw}" != "${OUTPUT_DIR}" ]; then OUTPUT_DIR=$_DEFAULT_OUTPUT_DIR; fi
-
-CONFIG_FILE="$OUTPUT_DIR/configs/training_config.json"
-
-# Check if required files exist
-if [ ! -f "$DATA_PATH" ]; then
-  echo "Error: Dataset file not found: $DATA_PATH"
-  exit 1
-fi
-
-# Create output directory if it doesn't exist
-mkdir -p "$OUTPUT_DIR"
-
-# If config file doesn't exist, run prepare_training.sh
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "Training config not found, running preparation script..."
-  ./scripts/prepare_training.sh "$OUTPUT_DIR" "$MODEL_NAME" "$DATA_PATH"
-fi
-
-echo "Starting fine-tuning process"
-echo "Model: $MODEL_NAME"
-echo "Dataset: $DATA_PATH"
-echo "Output directory: $OUTPUT_DIR"
-echo "Configuration: $CONFIG_FILE"
-
-# Create the fine-tuning Python script
-FINETUNE_SCRIPT="$OUTPUT_DIR/run_finetune.py"
-
-cat > "$FINETUNE_SCRIPT" << 'EOL'
-print("<<<<< RUN_FINETUNE.PY SCRIPT VERSION 20250602_0303 AM >>>>>", flush=True)
 #!/usr/bin/env python3
 """
 Fine-tuning script for LLMs on MCP datasets using PEFT/QLoRA.
@@ -78,6 +20,8 @@ from transformers import (
     set_seed,
 )
 from transformers.tokenization_utils_base import BatchEncoding # For wrapper
+from typing import List, Dict, Any, Optional
+import torch
 from peft import LoraConfig, TaskType, get_peft_model
 from datasets import load_dataset
 from trl import DataCollatorForCompletionOnlyLM
@@ -90,8 +34,8 @@ logging.basicConfig(
     datefmt="%m/%d/%Y %H:%M:%S",
     level=logging.INFO,
     handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(os.environ.get("OUTPUT_DIR", "./"), "train.log"))
+        logging.StreamHandler(sys.stdout)
+        # FileHandler will be added in main() after config is loaded
     ]
 )
 logger = logging.getLogger(__name__)
@@ -485,11 +429,116 @@ def prepare_dataset(data_path: str, data_config: Dict[str, Any]): # Removed toke
 
     logger.info(f"Processed dataset for SFTTrainer. Features: {processed_dataset.features}")
     logger.info(f"Processed dataset examples: {processed_dataset[:2]}")
-
-    # SFTTrainer will handle the tokenization.
-    # It will also handle formatting if a formatting_func is provided to SFTTrainer,
-    # or it will use the 'prompt' and 'completion' columns directly for completion-only loss.
     return processed_dataset
+class CustomMCPDataCollator:
+    """
+    Data collator specifically designed for completion-only fine-tuning with
+    the MistralCommonHFWrapper. It handles tokenization of prompts and completions,
+    creates labels by masking prompt tokens, and performs manual padding.
+
+    This is necessary because:
+    1. MistralCommonHFWrapper is not a "fast" tokenizer and has specific BOS/EOS behavior
+       that needs careful handling during tokenization for training.
+    2. trl.DataCollatorForCompletionOnlyLM, while powerful, has complex interactions
+       with the SFTTrainer's data formatting and the underlying tokenizer. When SFTTrainer
+       passes raw {'prompt': ..., 'completion': ...} dictionaries (as observed in this setup),
+       the TRL collator's internal tokenization path might not align with MistralCommonHFWrapper's
+       requirements, leading to issues like its `pad` method receiving un-tokenized data.
+    3. This custom collator provides full control over the tokenization of "prompt + completion",
+       the precise generation of labels by masking the prompt section, and consistent padding,
+       ensuring correct behavior for Devstral models.
+    """
+    def __init__(self, tokenizer: Any, max_seq_length: int):
+        self.tokenizer = tokenizer
+        self.max_seq_length = max_seq_length
+        if self.tokenizer.pad_token_id is None:
+            # This should have been set during tokenizer_wrapper initialization
+            # based on eos_token_id for Mistral tokenizers.
+            raise ValueError("Tokenizer for CustomMCPDataCollator must have pad_token_id set.")
+        logger.info(f"CustomMCPDataCollator initialized with max_seq_length: {self.max_seq_length}, pad_token_id: {self.tokenizer.pad_token_id}")
+
+    def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+        prompts = [f.get("prompt", "") for f in features] # Use .get for safety
+        completions = [f.get("completion", "") for f in features] # Use .get for safety
+
+        batch_input_ids = []
+        batch_labels = []
+        batch_attention_masks = []
+
+        for i, (prompt, completion) in enumerate(zip(prompts, completions)):
+            full_text = f"{prompt}{completion}{self.tokenizer.eos_token}"
+
+            tokenized_full = self.tokenizer(
+                full_text,
+                truncation=True,
+                max_length=self.max_seq_length,
+                padding=False,
+                return_attention_mask=True
+            )
+            input_ids = tokenized_full["input_ids"]
+            attention_mask = tokenized_full["attention_mask"]
+
+            # Determine length of prompt part for masking labels
+            # Tokenize prompt as it would appear at the start of full_text
+            prompt_only_tokenized = self.tokenizer(
+                prompt,
+                add_special_tokens=True,
+                truncation=True,
+                max_length=self.max_seq_length,
+                padding=False
+            )
+            len_prompt_tokens = len(prompt_only_tokenized["input_ids"])
+
+            if not prompt: # Handle empty prompt for masking
+                if input_ids and input_ids[0] == self.tokenizer.bos_token_id: # If BOS is present and prompt was empty
+                    len_prompt_tokens = 1
+                else:
+                    len_prompt_tokens = 0
+
+            current_labels = list(input_ids)
+            mask_upto = min(len_prompt_tokens, len(input_ids))
+            for j in range(mask_upto):
+                current_labels[j] = -100
+
+            batch_input_ids.append(input_ids)
+            batch_attention_masks.append(attention_mask)
+            batch_labels.append(current_labels)
+
+            if i == 0: # Log details for the first item in the batch for debugging
+                logger.debug(f"CustomCollator - Item 0: Prompt: '{prompt[:50]}...'")
+                logger.debug(f"CustomCollator - Item 0: Completion: '{completion[:50]}...'")
+                logger.debug(f"CustomCollator - Item 0: Full text tokenized input_ids (len {len(input_ids)}): {input_ids[:25]}...")
+                logger.debug(f"CustomCollator - Item 0: Prompt-only tokenized input_ids (len {len(prompt_only_tokenized['input_ids'])}): {prompt_only_tokenized['input_ids'][:25]}...")
+                logger.debug(f"CustomCollator - Item 0: Calculated len_prompt_tokens for masking: {len_prompt_tokens}")
+                logger.debug(f"CustomCollator - Item 0: Resulting labels (len {len(current_labels)}): {current_labels[:25]}...")
+
+        max_len_in_batch = 0
+        if batch_input_ids:
+            max_len_in_batch = max(len(ids) for ids in batch_input_ids)
+
+        if max_len_in_batch == 0: # All sequences were empty or batch was empty
+             return {
+                "input_ids": torch.empty(len(features), 0, dtype=torch.long),
+                "attention_mask": torch.empty(len(features), 0, dtype=torch.long),
+                "labels": torch.empty(len(features), 0, dtype=torch.long),
+            }
+
+        padded_input_ids_list = []
+        padded_attention_masks_list = []
+        padded_labels_list = []
+
+        for ids, mask, lbls in zip(batch_input_ids, batch_attention_masks, batch_labels):
+            padding_length = max_len_in_batch - len(ids)
+            padded_input_ids_list.append(ids + [self.tokenizer.pad_token_id] * padding_length)
+            padded_attention_masks_list.append(mask + [0] * padding_length)
+            padded_labels_list.append(lbls + [-100] * padding_length)
+
+        return {
+            "input_ids": torch.tensor(padded_input_ids_list, dtype=torch.long),
+            "attention_mask": torch.tensor(padded_attention_masks_list, dtype=torch.long),
+            "labels": torch.tensor(padded_labels_list, dtype=torch.long),
+        }
+
 
 def main():
     parser = argparse.ArgumentParser(description="Fine-tune a model on MCP datasets")
@@ -508,6 +557,21 @@ def main():
 
     # Make sure output_dir exists
     os.makedirs(training_config["output_dir"], exist_ok=True)
+
+    # Configure FileHandler for logging using output_dir from config
+    root_logger = logging.getLogger() # Get the root logger
+    log_file_path = os.path.join(training_config["output_dir"], "train.log")
+    file_handler = logging.FileHandler(log_file_path)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S"
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.INFO) # Ensure file handler also logs INFO
+    root_logger.addHandler(file_handler)
+
+    logger.info(f"Logging to console and to: {log_file_path}")
+
 
     # Setup 4-bit quantization for model loading
     compute_dtype = torch.float16
@@ -614,22 +678,49 @@ def main():
     data_path = data_config.get("train_file")
     prepared_train_dataset = prepare_dataset(data_path, data_config)
 
-    # Setup the data collator for completion-only learning
-    response_template = "<|assistant|>"
-    # Encode response template using the base mistral tokenizer's underlying SentencePiece model for raw IDs
-    # This is still useful for logging or direct use if needed, but not for collator init.
-    _underlying_spt_for_template = base_mistral_tokenizer.instruct_tokenizer.tokenizer
-    _logged_response_template_ids = _underlying_spt_for_template.encode(response_template, bos=False, eos=False)
-    logger.info(f"Response template string is: '{response_template}'. Logged token IDs for it: {_logged_response_template_ids}")
+    # Setup the data collator
+    # Conditional logic for data collator selection:
+    # - CustomMCPDataCollator: For Mistral models using MistralCommonHFWrapper.
+    #   It handles the specific tokenization, prompt/completion separation,
+    #   label masking, and padding required for these wrapped tokenizers.
+    # - DataCollatorForCompletionOnlyLM: For standard Hugging Face tokenizers,
+    #   or as a fallback if the custom one is not applicable. (Currently,
+    #   the script is hardcoded for MistralCommonHFWrapper, so this 'else'
+    #   branch is more for future-proofing or alternative setups).
 
-    collator = DataCollatorForCompletionOnlyLM(
-        response_template=response_template, # Pass the STRING template
-        tokenizer=tokenizer,
-        mlm=False
-    )
-    # Explicitly set is_dataset_pretokenized to False to ensure collator tokenizes
-    collator.is_dataset_pretokenized = False
-    logger.info(f"DataCollatorForCompletionOnlyLM.is_dataset_pretokenized explicitly set to: {collator.is_dataset_pretokenized}")
+    if isinstance(tokenizer, MistralCommonHFWrapper):
+        logger.info("Using CustomMCPDataCollator for MistralCommonHFWrapper.")
+        collator = CustomMCPDataCollator(
+            tokenizer=tokenizer,
+            max_seq_length=data_config.get("max_seq_length", 2048)
+        )
+    else:
+        # This branch would be for non-MistralCommonHFWrapper tokenizers.
+        # The script currently always uses the wrapper for Mistral models.
+        logger.info("Using trl.DataCollatorForCompletionOnlyLM.")
+        response_template = "<|assistant|>" # Define here as it's TRL specific
+
+        # Log response template IDs only if base_mistral_tokenizer is available (for context)
+        # This avoids errors if a non-Mistral tokenizer path were ever taken.
+        if 'base_mistral_tokenizer' in locals() and hasattr(base_mistral_tokenizer, 'instruct_tokenizer'):
+            try:
+                _underlying_spt_for_template = base_mistral_tokenizer.instruct_tokenizer.tokenizer
+                _logged_response_template_ids = _underlying_spt_for_template.encode(response_template, bos=False, eos=False)
+                logger.info(f"Response template string for TRL collator: '{response_template}'. Logged token IDs: {_logged_response_template_ids}")
+            except Exception as e:
+                logger.warning(f"Could not log response template IDs for TRL collator: {e}")
+        else:
+            logger.info(f"Response template string for TRL collator: '{response_template}'. Base Mistral tokenizer not available for ID logging.")
+
+        collator = DataCollatorForCompletionOnlyLM(
+            response_template=response_template,
+            tokenizer=tokenizer, # This would be a standard HF tokenizer
+            mlm=False
+        )
+        # Note: `collator.is_dataset_pretokenized = False` was removed as SFTTrainer
+        # and the collator typically handle this state automatically.
+
+    logger.info(f"Data collator selected: {type(collator).__name__}")
 
     # Setup training arguments
     training_args = TrainingArguments(
@@ -675,24 +766,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-EOL
-
-chmod +x "$FINETUNE_SCRIPT"
-
-# Set environment variables
-export MODEL_NAME
-export DATA_PATH
-export OUTPUT_DIR
-export PYTHONPATH="$PYTHONPATH:$(pwd)"
-
-echo "Running fine-tuning script..."
-uv run python "$FINETUNE_SCRIPT" --config "$CONFIG_FILE"
-
-# Check if fine-tuning was successful
-if [ $? -eq 0 ]; then
-  echo "Fine-tuning completed successfully!"
-  echo "Fine-tuned model saved to: $OUTPUT_DIR/final"
-else
-  echo "Error: Fine-tuning failed"
-  exit 1
-fi

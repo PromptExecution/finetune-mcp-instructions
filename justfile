@@ -59,7 +59,7 @@ serve-model-example:
 
 # Run evaluation comparing base model vs fine-tuned model
 evaluate base_model finetuned_model test_data:
-    ./scripts/evaluate_models.sh {{base_model}} {{finetuned_model}} {{test_data}}
+    uv run -- ./scripts/evaluate_models.sh {{base_model}} {{finetuned_model}} {{test_data}}
 
 evaluate-examples:
     just evaluate mistralai/Devstral-Small-2505 finetune_output data/eval_samples.json
@@ -71,10 +71,8 @@ generate-mcp-dataset num_examples output_file:
     python src/generate_dataset.py --num-examples {{num_examples}} --output-file {{output_file}}
 
 # Fine-tune the model with MCP knowledge
-finetune-mcp model_name data_path output_dir:
-    # Example: just finetune-mcp model_name="mistralai/Devstral-Small-2505" data_path="data/preprocessed_mcp_dataset.json" output_dir="finetune_output"
-    #./scripts/finetune_model.sh {{model_name}} {{data_path}} {{output_dir}} > finetune_mcp_output.log 2>&1
-    ./scripts/finetune_model.sh {{model_name}} {{data_path}} {{output_dir}}
+finetune-mcp output_dir model_name data_path:
+    ./scripts/internal_finetune_mcp_logic.sh "{{output_dir}}" "{{model_name}}" "{{data_path}}"
 
 
 # Example command to run the entire process for Devstral

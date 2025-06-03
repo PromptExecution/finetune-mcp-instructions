@@ -5,9 +5,24 @@
 set -e
 
 # Default values
-OUTPUT_DIR_ARG=${1}
-MODEL_NAME_ARG=${2}
-DATA_PATH_ARG=${3}
+# Raw arguments that might come from 'just' like key=value
+_raw_output_dir_arg=${1}
+_raw_model_name_arg=${2}
+_raw_data_path_arg=${3}
+
+# Strip 'key=' prefix. If no prefix, original value is retained.
+# If the arg was not 'key=value' but just 'value', this will result in 'value'.
+# If the arg was 'key=', this will result in an empty string.
+OUTPUT_DIR_ARG=$(echo "${_raw_output_dir_arg}" | sed -e 's/^[^=]*=//' -e 's/"//g')
+MODEL_NAME_ARG=$(echo "${_raw_model_name_arg}" | sed -e 's/^[^=]*=//' -e 's/"//g')
+DATA_PATH_ARG=$(echo "${_raw_data_path_arg}" | sed -e 's/^[^=]*=//' -e 's/"//g')
+
+# If the original raw argument was identical to the stripped argument,
+# it means there was no "key=" prefix.
+# If they are different, AND the stripped argument is now empty,
+# it means the input was "key=". In this case, we want to trigger the default.
+# So, if $OUTPUT_DIR_ARG is empty here, the default on the next line will apply.
+# This logic is implicitly handled by the :- default mechanism if the variable is empty.
 
 OUTPUT_DIR=${OUTPUT_DIR_ARG:-"finetune_output"}
 MODEL_NAME_FOR_CONFIG=${MODEL_NAME_ARG:-"mistralai/Devstral-Small-2505"}
